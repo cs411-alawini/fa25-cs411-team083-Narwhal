@@ -8,12 +8,12 @@
 | TeamName    |         Narwhal        |
 | Captain     |     Tuan Nguyen Ngo    |
 | Captain     |   tuann2@illinois.edu  |
-| Member1     |        Kevin Pei       |
-| Member1     |   kevin2@illinois.edu  |
-| Member2     |     Ti-Chung Cheng     |
-| Member2     |  tichung3@illinois.edu |
-| Member3     |                        |
-| Member3     |                        |
+| Member1     |        Ryan Zhou       |
+| Member1     |   ryanz5@illinois.edu  |
+| Member2     |     Vihaan Khare       |
+| Member2     |  vrkhare2@illinois.edu |
+| Member3     |      Maahum Imran      |
+| Member3     |  mimra2@illinois.edu   |
 
 ## Project Information
 

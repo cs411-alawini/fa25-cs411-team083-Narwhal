@@ -11,7 +11,6 @@ interface Medicine {
 }
 
 function App() {
-
   const [nextSymptom, setNextSymptom] = useState("");
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [hoveredMedicine, setHoveredMedicine] = useState("");
@@ -27,18 +26,18 @@ function App() {
   const [findLocationsLoading, setFindLocationsLoading] = useState(false);
 
   useEffect(() => {
-  if (hoveredMedicine == ""){
-    return;
-  }
+    if (hoveredMedicine == "") {
+      return;
+    }
 
-  const fetchLocations = async () => {
-    // replace with real API call later
-    const data = ["location1", "location2", "location3"];
-    setLocations(data);
-  };
+    const fetchLocations = async () => {
+      // replace with real API call later
+      const data = ["location1", "location2", "location3"];
+      setLocations(data);
+    };
 
-  fetchLocations();
-}, [hoveredMedicine]);
+    fetchLocations();
+  }, [hoveredMedicine]);
 
   /*const medicines = [
     { name: "med1", price: 10, score: 8 },
@@ -112,15 +111,22 @@ function App() {
                 {medicine.name}, {medicine.price}, {medicine.score}
               </p>
               {hoveredMedicine == medicine.name && (
-                <div>{findLocationsError ? (<p>There was an error loading the locations this medicine is carried. Please try again </p>): (
-                  findLocationsLoading ? (<p>Loading...</p>) : (
+                <div>
+                  {findLocationsError ? (
+                    <p>
+                      There was an error loading the locations this medicine is
+                      carried. Please try again{" "}
+                    </p>
+                  ) : findLocationsLoading ? (
+                    <p>Loading...</p>
+                  ) : (
                     <ul>
                       {locations.map((location) => (
                         <div>{location}</div>
                       ))}
                     </ul>
-                  )
-                )}</div>
+                  )}
+                </div>
               )}
             </li>
           ))}

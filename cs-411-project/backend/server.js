@@ -1,7 +1,7 @@
 require('dotenv').config(); 
 const express = require('express');
 const cors = require('cors');
-const { pool, query, getMedicinesBySymptoms } = require('./db');
+const { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -56,6 +56,39 @@ app.delete('/api/items/:id', (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
   const removed = items.splice(idx, 1)[0];
   res.json(removed);
+});
+
+
+//getmedicinesbysymptoms endpoint
+
+app.get('/api/getmedicinesbysymptoms', async (req, res) => {
+  const symptom = req.query.symptom;
+  if (!symptom) {
+    return res.status(400).json({ error: 'symptom query parameter is required' });
+  }
+  try {
+    const medicines = await getMedicinesBySymptoms(symptom);
+    res.json(medicines);
+  } catch (err) {
+    console.error('Error fetching medicines by symptoms:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+//getpharmaciesbymedicine endpoint
+
+app.get('/api/getpharmaciesbymedicine', async (req, res) => {
+  const medicineName = req.query.medicineName;
+  if (!medicineName) {
+    return res.status(400).json({ error: 'medicineName query parameter is required' });
+  }
+  try {
+    const pharmacies = await getPharmaciesByMedicine(medicineName);
+    res.json(pharmacies);
+  } catch (err) {
+    console.error('Error fetching pharmacies by medicine:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.listen(PORT, () => {

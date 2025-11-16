@@ -1,13 +1,24 @@
 import { useEffect, useState, type SetStateAction } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 
 interface Medicine {
   name: string;
-  price: number;
-  score: number;
+  rating: number;
+  symptoms_treated: number;
   //can add more things in the final product
+}
+
+interface MedicineRaw {
+  medicine_name: string;
+  medicine_rating: string;
+  symptoms_treated: string;
+  //can add more things in the final product
+}
+
+interface Location {
+  address: string;
+  city: string;
+  state: string;
 }
 
 function App() {
@@ -16,7 +27,7 @@ function App() {
   const [hoveredMedicine, setHoveredMedicine] = useState("");
 
   const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [locations, setLocations] = useState<string[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   //api specific states
   const [findMedicineError, setFindMedicineError] = useState(false);
@@ -31,9 +42,31 @@ function App() {
     }
 
     const fetchLocations = async () => {
-      // replace with real API call later
-      const data = ["location1", "location2", "location3"];
-      setLocations(data);
+      setFindLocationsLoading(true);
+      setFindLocationsError(false);
+      try {
+        const response = await fetch(
+          `http://localhost:4000/api/getpharmaciesbymedicine?medicineName=${encodeURIComponent(
+            hoveredMedicine
+          )}`
+        );
+        if (!response.ok) {
+          setFindLocationsError(true);
+          throw new Error(`HTTP error! status: ${response.status}`); //if we actually do this in the final product imma punch yall but for testing this is fine ig
+        }
+        const data = await response.json();
+        const data_transformed = data.map((pharmacy: Location) => ({
+          address: pharmacy.address,
+          city: pharmacy.city,
+          state: pharmacy.state,
+        }));
+        setLocations(data_transformed);
+      } catch (err) {
+        console.error("Error fetching pharmacies:", err);
+        setFindLocationsError(true);
+      } finally {
+        setFindLocationsLoading(false);
+      }
     };
 
     fetchLocations();
@@ -59,14 +92,34 @@ function App() {
     setSymptoms((prev) => [...prev, nextSymptom]);
   };
 
-  const getMedicines = () => {
-    setMedicines([
-      { name: "med1", price: 10, score: 8 },
-      { name: "med2", price: 20, score: 6 },
-      { name: "med3", price: 15, score: 9 },
-    ]);
-
-    //temp placeholder until we get api routes in order
+  const getMedicines = async () => {
+    setFindMedicineLoading(true);
+    setFindMedicineError(false);
+    try {
+      const response = await fetch(
+        `http://localhost:4000/api/getmedicinesbysymptoms?symptom=${encodeURIComponent(
+          "Diarrhea"
+        )}` //change path to env variable later, doing this cuz its 1030 and im tired. also dont hardcode diarrhea
+      );
+      if (!response.ok) {
+        setFindMedicineError(true);
+        throw new Error(`HTTP error! status: ${response.status}`); //if we actually do this in the final product imma punch yall but for testing this is fine ig
+      }
+      const data = await response.json();
+      console.log(data);
+      const data_transformed = data.map((med: MedicineRaw) => ({
+        name: med.medicine_name,
+        rating: Number(med.medicine_rating),
+        symptoms_treated: Number(med.symptoms_treated),
+      }));
+      console.log(data_transformed);
+      setMedicines(data_transformed);
+    } catch (err) {
+      setFindMedicineError(true);
+      console.error("Error fetching medicines:", err);
+    } finally {
+      setFindMedicineLoading(false);
+    }
   };
 
   return (
@@ -104,11 +157,12 @@ function App() {
         <ul>
           {medicines.map((medicine) => (
             <li
+              key={medicine.name}
               onMouseEnter={() => setHoveredMedicine(medicine.name)}
               onMouseLeave={() => setHoveredMedicine("")}
             >
               <p>
-                {medicine.name}, {medicine.price}, {medicine.score}
+                {medicine.name}, {medicine.rating}, {medicine.symptoms_treated}
               </p>
               {hoveredMedicine == medicine.name && (
                 <div>
@@ -122,7 +176,9 @@ function App() {
                   ) : (
                     <ul>
                       {locations.map((location) => (
-                        <div>{location}</div>
+                        <div>
+                          {location.address}, {location.city}, {location.state}
+                        </div>
                       ))}
                     </ul>
                   )}

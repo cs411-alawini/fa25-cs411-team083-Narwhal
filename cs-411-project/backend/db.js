@@ -26,42 +26,41 @@ query('SELECT 1 + 1 AS solution').then(rows => {
 
 async function addUser(email, state, city, address, preferredPharmacy){
     const sql1 = `
-        SELECT pharmacies.id FROM stage2_schema.pharmacies AS pharmacies
-        WHERE name = ?
+        SELECT id FROM stage2_schema.pharmacies
+        WHERE address = ?
     `;
 
-    const pharmId = await query(sql, [preferredPharmacy]);
-
-    if(!pharmId){
-        return res.status(404).json({ 
-            error: "Pharmacy not found",
-            message: `We could not find a pharmacy named '${pharmacyName}'`
-        });
-    }
+    const pharmResult = await query(sql1, [preferredPharmacy]);
+    const pharmId = pharmResult[0].id;
 
     const sql2 = `
-        INSERT INTO stage2_schema.users AS users (state, city, address, email, preferred_pharmacy_id)
+        INSERT INTO stage2_schema.users (state, city, address, email, preferred_pharmacy_id)
         VALUES (?, ?, ?, ?, ?)
     `;
 
-    const [result] = await query(sql, [state, city, address, email, pharmId]);
+    const result = await query(sql2, [state, city, address, email, pharmId]);
+    return result;
 }
 
 async function addSymptom(email, symptom){
     const sql = `
-        INSERT INTO stage2_schema.currentlyHas AS currentlyHas (user_email, symptom_name)
+        INSERT INTO stage2_schema.currentlyHas (user_email, symptom_name)
         VALUES (?, ?)
     `;
-    const [result] = await query(sql, [email, symptom]);
+    const result = await query(sql, [email, symptom]);
+    console.log(result);
+    return result;
 }
 
 async function removeSymptom(email, symptom){
     const sql = `
-        DELETE FROM stage2_schema.currentlyHas AS currentlyHas
+        DELETE FROM stage2_schema.currentlyHas
         WHERE user_email = ? AND symptom_name = ?
     `;
 
-    const [result] = await query(sql, [email, symptom]);
+    const result = await query(sql, [email, symptom]);
+    console.log(result);
+    return result;
 }
 
 async function getMedicinesBySymptoms(email) {
@@ -147,7 +146,7 @@ getPharmaciesByMedicine("Terbest Cream").then(rows => {
     console.error('Database connection failed:', err);
 });
 
-module.exports = { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine };
+module.exports = { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine, addUser, addSymptom, removeSymptom };
 
 // use if need to print symptoms
 // debugListSymptoms().catch(err => console.error(err));

@@ -117,8 +117,8 @@ function App() {
     setFindMedicineError(false);
     try {
       const response = await fetch(
-        `http://localhost:4000/api/getmedicinesbysymptoms?symptom=${encodeURIComponent(
-          "Diarrhea"
+        `http://localhost:4000/api/getmedicinesbysymptoms?email=${encodeURIComponent(
+          userEmail
         )}` //change path to env variable later, doing this cuz its 1030 and im tired. also dont hardcode diarrhea
       );
       if (!response.ok) {
@@ -144,7 +144,7 @@ function App() {
 
   const addSymptom = async (email: string, symptom: string) => {
     try {
-      const response = await fetch("http://localhost:4000/api/removesymptom", {
+      const response = await fetch("http://localhost:4000/api/addsymptom", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -236,6 +236,7 @@ function App() {
 
   return (
     <>
+    <div>For debugging: your email is {userEmail}</div>
       <h1>Welcome to App name!</h1>
       <h2>Login</h2>
       {/* currently we are not checking if the email exists in the db. we should probably do that but i am lazy */}
@@ -294,7 +295,7 @@ function App() {
         </label>
         <br />
         <label>
-          Preferred Pharmacy:
+          Preferred Pharmacy Address:
           <input
             type="text"
             value={signupPharmacy}

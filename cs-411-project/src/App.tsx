@@ -49,6 +49,41 @@ function App() {
   const [findLocationsError, setFindLocationsError] = useState(false);
   const [findLocationsLoading, setFindLocationsLoading] = useState(false);
 
+  // change address form states
+  const [newAddress, setNewAddress] = useState("");
+  const [changeAddressLoading, setChangeAddressLoading] = useState(false);
+  const [changeAddressError, setChangeAddressError] = useState("");
+  const [changeAddressSuccess, setChangeAddressSuccess] = useState(false);
+
+  useEffect(() => {
+    if (userEmail == "") {
+      return;
+    }
+
+    const fetchSymptoms = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:4000/api/getsymptomsbyuser?email=${encodeURIComponent(
+            userEmail
+          )}`
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data_transformed = data.map((item: any) => item.symptom_name);
+        console.log("symptoms set");
+        setSymptoms(data_transformed);
+      } catch (err) {
+        console.error("Error fetching symptoms:", err);
+      }
+    };
+
+    fetchSymptoms();
+  }, [userEmail]);
+
   useEffect(() => {
     if (hoveredMedicine == "") {
       return;
@@ -234,6 +269,46 @@ function App() {
     }
   };
 
+  const handleChangeAddress = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setChangeAddressLoading(true);
+    setChangeAddressError("");
+    setChangeAddressSuccess(false);
+
+    if (!userEmail) {
+      setChangeAddressError("Please log in first");
+      setChangeAddressLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:4000/api/updateuseraddress", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          address: newAddress,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update address");
+      }
+
+      setChangeAddressSuccess(true);
+      setNewAddress("");
+    } catch (error) {
+      console.error("Error changing address:", error);
+      setChangeAddressError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setChangeAddressLoading(false);
+    }
+  };
+
   return (
     <>
     <div>For debugging: your email is {userEmail}</div>
@@ -311,6 +386,26 @@ function App() {
       </form>
       {signupSuccess && <p style={{ color: "green" }}>Signup successful!</p>}
       {signupError && <p style={{ color: "red" }}>Error: {signupError}</p>}
+
+      <h2>Change Address</h2>
+      <form onSubmit={handleChangeAddress}>
+        <label>
+          New Address:
+          <input
+            type="text"
+            value={newAddress}
+            onChange={(e) => setNewAddress(e.target.value)}
+            placeholder="new address"
+            required
+          />
+        </label>
+        <br />
+        <button type="submit" disabled={changeAddressLoading}>
+          {changeAddressLoading ? "Updating..." : "Update Address"}
+        </button>
+      </form>
+      {changeAddressSuccess && <p style={{ color: "green" }}>Address updated successfully!</p>}
+      {changeAddressError && <p style={{ color: "red" }}>Error: {changeAddressError}</p>}
       
       <h2>Current Symptoms</h2>
       <ul>

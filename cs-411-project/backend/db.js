@@ -106,7 +106,27 @@ async function getPharmaciesByMedicine(medicineName) {
     return rows;
 }
 
+async function getSymptomsByUser(email){
+    const sql = `
+        SELECT symptom_name
+        FROM stage2_schema.currentlyHas AS currentlyHas
+        WHERE user_email = ?;
+    `;
 
+    const rows = await query(sql, [email]);
+    return rows;
+}
+
+async function updateUserAddress(address, email){
+    const sql = `
+        UPDATE stage2_schema.users
+        SET address = ?
+        WHERE email = ?
+    `;
+
+    const rows = await query(sql, [address, email]);
+    return rows;
+}
 
 //use this to check available symptoms (called at end)
 // async function debugListSymptoms() {
@@ -146,7 +166,7 @@ getPharmaciesByMedicine("Terbest Cream").then(rows => {
     console.error('Database connection failed:', err);
 });
 
-module.exports = { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine, addUser, addSymptom, removeSymptom };
+module.exports = { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine, addUser, addSymptom, removeSymptom, getSymptomsByUser, updateUserAddress };
 
 // use if need to print symptoms
 // debugListSymptoms().catch(err => console.error(err));

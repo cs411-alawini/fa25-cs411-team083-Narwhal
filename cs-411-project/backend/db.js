@@ -24,7 +24,47 @@ query('SELECT 1 + 1 AS solution').then(rows => {
     console.error('Database connection failed:', err);
 })
 
-async function getMedicinesBySymptoms(symptom) {
+async function addUser(email, state, city, address, preferredPharmacy){
+    const sql1 = `
+        SELECT pharmacies.id FROM stage2_schema.pharmacies AS pharmacies
+        WHERE name = ?
+    `;
+
+    const pharmId = await query(sql, [preferredPharmacy]);
+
+    if(!pharmId){
+        return res.status(404).json({ 
+            error: "Pharmacy not found",
+            message: `We could not find a pharmacy named '${pharmacyName}'`
+        });
+    }
+
+    const sql2 = `
+        INSERT INTO stage2_schema.users AS users (state, city, address, email, preferred_pharmacy_id)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+
+    const [result] = await query(sql, [state, city, address, email, pharmId]);
+}
+
+async function addSymptom(email, symptom){
+    const sql = `
+        INSERT INTO stage2_schema.currentlyHas AS currentlyHas (user_email, symptom_name)
+        VALUES (?, ?)
+    `;
+    const [result] = await query(sql, [email, symptom]);
+}
+
+async function removeSymptom(email, symptom){
+    const sql = `
+        DELETE FROM stage2_schema.currentlyHas AS currentlyHas
+        WHERE user_email = ? AND symptom_name = ?
+    `;
+
+    const [result] = await query(sql, [email, symptom]);
+}
+
+async function getMedicinesBySymptoms(email) {
     const sql = `
         SELECT 
             medicines.name AS medicine_name,
@@ -35,13 +75,13 @@ async function getMedicinesBySymptoms(symptom) {
             ON medicines.name = treatedBy.medicine_name
         JOIN stage2_schema.currentlyHas AS currentlyHas 
             ON treatedBy.symptom_name = currentlyHas.symptom_name
-        WHERE currentlyHas.user_email = 'a.brooks@outlook.com'
+        WHERE currentlyHas.user_email = ?
         GROUP BY medicines.name, medicines.rating
         ORDER BY symptoms_treated DESC, medicine_rating DESC
         LIMIT 15;
     `;
 
-    const rows = await query(sql, [symptom]);
+    const rows = await query(sql, [email]);
     return rows;
 }
 

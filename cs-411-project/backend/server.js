@@ -91,6 +91,72 @@ app.get('/api/getpharmaciesbymedicine', async (req, res) => {
   }
 });
 
+// app.js (or controller.js)
+const { addUser, addSymptom, removeSymptom } = require('./services');
+
+// Endpoint: Add User
+app.post('/api/adduser', async (req, res) => {
+    const { email, state, city, address, preferredPharmacy } = req.body;
+
+    // Basic validation
+    if (!email || !preferredPharmacy) {
+        return res.status(400).json({ error: 'Email and Preferred Pharmacy are required' });
+    }
+
+    try {
+        await addUser(email, state, city, address, preferredPharmacy);
+        res.status(201).json({ message: 'User added successfully' });
+    } catch (err) {
+        console.error('Error adding user:', err);
+        
+        // Handle specific "Pharmacy not found" error thrown by service
+        if (err.message === 'Pharmacy not found') {
+            return res.status(404).json({ 
+                error: "Pharmacy not found",
+                message: `We could not find a pharmacy named '${preferredPharmacy}'`
+            });
+        }
+
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Endpoint: Add Symptom
+app.post('/api/addsymptom', async (req, res) => {
+    const { email, symptom } = req.body;
+
+    if (!email || !symptom) {
+        return res.status(400).json({ error: 'Email and Symptom are required' });
+    }
+
+    try {
+        await addSymptom(email, symptom);
+        res.status(201).json({ message: 'Symptom added successfully' });
+    } catch (err) {
+        console.error('Error adding symptom:', err);
+        // Check for duplicate entry errors (SQL specific) if necessary
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Endpoint: Remove Symptom
+app.delete('/api/removesymptom', async (req, res) => {
+    // Ideally use req.body for DELETE, but req.query is acceptable if body not supported
+    const { email, symptom } = req.body; 
+
+    if (!email || !symptom) {
+        return res.status(400).json({ error: 'Email and Symptom are required' });
+    }
+
+    try {
+        await removeSymptom(email, symptom);
+        res.json({ message: 'Symptom removed successfully' });
+    } catch (err) {
+        console.error('Error removing symptom:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 app.listen(PORT, () => {
   console.log(`Temp backend listening on http://localhost:${PORT}`);
 });

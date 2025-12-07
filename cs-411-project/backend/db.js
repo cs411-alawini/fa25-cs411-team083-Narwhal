@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST || '127.0.0.1',
-    port: Number(process.env.DB_PORT || 3307),
+    port: Number(process.env.DB_PORT || 3306),
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
@@ -106,6 +106,54 @@ async function getPharmaciesByMedicine(medicineName) {
     return rows;
 }
 
+async function getUserMedsAndPharmacies(userEmail) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+  
+      const medicinessql = `
+        SELECT 
+            m.name AS medicine_name,
+            m.rating AS medicine_rating,
+            COUNT(tb.symptom_name) AS symptoms_treated
+        FROM stage2_schema.medicines m
+        JOIN stage2_schema.treatedBy tb ON m.name = tb.medicine_name
+        JOIN stage2_schema.currentlyHas ch ON tb.symptom_name = ch.symptom_name
+        WHERE ch.user_email = ?
+        GROUP BY m.name, m.rating
+        ORDER BY symptoms_treated DESC, m.rating DESC
+        LIMIT 15;
+      `;
+      const medicines = await connection.query(medicinessql, [userEmail]);
+  
+      const pharmaciessql = `
+        SELECT 
+            p.id AS pharmacy_id,
+            p.address,
+            p.city,
+            p.state,
+            COUNT(DISTINCT c.medicine_name) AS num_medicines_carried
+        FROM stage2_schema.pharmacies p
+        JOIN stage2_schema.carries c ON p.id = c.pharmacy_id
+        JOIN stage2_schema.treatedBy tb ON c.medicine_name = tb.medicine_name
+        JOIN stage2_schema.currentlyHas ch ON tb.symptom_name = ch.symptom_name
+        WHERE ch.user_email = ?
+        GROUP BY p.id, p.address, p.city, p.state
+        ORDER BY num_medicines_carried DESC
+        LIMIT 15;
+      `;
+      const pharmacies = await connection.query(pharmaciessql, [userEmail]);
+  
+      await connection.commit();
+      return { medicines: medicines[0], pharmacies: pharmacies[0] };
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  }
+  
 async function getSymptomsByUser(email){
     const sql = `
         SELECT symptom_name
@@ -166,7 +214,18 @@ getPharmaciesByMedicine("Terbest Cream").then(rows => {
     console.error('Database connection failed:', err);
 });
 
-module.exports = { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine, addUser, addSymptom, removeSymptom, getSymptomsByUser, updateUserAddress };
+getUserMedsAndPharmacies('a.brooks@outlook.com')
+  .then(result => {
+    console.log('TRANSACTION RESULT:');
+    console.log('Medicines:', result.medicines);
+    console.log('Pharmacies:', result.pharmacies);
+  })
+  .catch(err => console.error('Error in transaction:', err));
+
+
+
+module.exports = { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine, getUserMedsAndPharmacies, addUser, addSymptom, removeSymptom, getSymptomsByUser, updateUserAddress };
+
 
 // use if need to print symptoms
 // debugListSymptoms().catch(err => console.error(err));

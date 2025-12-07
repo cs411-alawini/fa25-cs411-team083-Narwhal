@@ -6,6 +6,7 @@ const {
   query,
   getMedicinesBySymptoms,
   getPharmaciesByMedicine,
+  getUserMedsAndPharmacies,
   addUser,
   addSymptom,
   removeSymptom,
@@ -199,6 +200,25 @@ app.put("/api/updateuseraddress", async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+const { getUserMedsAndPharmacies } = require('./db');
+
+
+app.get('/api/getUserMedsAndPharmacies', async (req, res) => {
+  const userEmail = req.query.userEmail;
+  if (!userEmail) {
+    return res.status(400).json({ error: 'userEmail query parameter is required' });
+  }
+
+  try {
+    const result = await getUserMedsAndPharmacies(userEmail);
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching medicines and pharmacies:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Temp backend listening on http://localhost:${PORT}`);

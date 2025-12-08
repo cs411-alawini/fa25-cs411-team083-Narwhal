@@ -2,6 +2,8 @@ require('dotenv').config();
 const { get } = require('http');
 const mysql = require('mysql2/promise');
 
+//AI Usage: NONE of the database queries were written by AI. All queries were created manually.
+
 const pool = mysql.createPool({
     host: process.env.DB_HOST || '127.0.0.1',
     port: Number(process.env.DB_PORT || 3307),
@@ -208,7 +210,7 @@ getUserMedsAndPharmacies('a.brooks@outlook.com')
 
 
 
-module.exports = { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine, getUserMedsAndPharmacies, addUser, addSymptom, removeSymptom, getSymptomsByUser, updateUserAddress };
+module.exports = { pool, query, getMedicinesBySymptoms, getPharmaciesByMedicine, getUserMedsAndPharmacies, addUser, addSymptom, removeSymptom, getSymptomsByUser, updateUserAddress, getMedicinesBySymptomsAdvanced };
 
 
 // use if need to print symptoms

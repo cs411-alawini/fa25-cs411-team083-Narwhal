@@ -12,7 +12,10 @@ const {
   removeSymptom,
   getSymptomsByUser,
   updateUserAddress,
+  getMedicinesBySymptomsAdvanced,
 } = require("./db");
+
+//AI Usage: Most of the backend setup was created using AI. Again, NONE of the database queries were written using AI.
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -79,6 +82,23 @@ app.get("/api/getmedicinesbysymptoms", async (req, res) => {
     res.json(medicines);
   } catch (err) {
     console.error("Error fetching medicines by symptoms:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/api/getmedicinesbysymptoms/advanced", async (req, res) => {
+  const email = req.query.email;
+  if (!email) {
+    return res.status(400).json({ error: "email query parameter is required" });
+  }
+  try {
+    const result = await getMedicinesBySymptomsAdvanced(email);
+    // result is an array with [symptoms, medicines]
+    const symptoms = result[0] || [];
+    const medicines = result[1] || [];
+    res.json({ symptoms, medicines });
+  } catch (err) {
+    console.error("Error fetching advanced medicines by symptoms:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

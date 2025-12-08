@@ -1,6 +1,8 @@
 import { useEffect, useState, type SetStateAction } from "react";
 import "./App.css";
 
+//AI Usage: Most of the API calls and API state management (loading + error states) were coded using AI
+
 interface Medicine {
   name: string;
   rating: number;
@@ -54,6 +56,20 @@ function App() {
   const [changeAddressLoading, setChangeAddressLoading] = useState(false);
   const [changeAddressError, setChangeAddressError] = useState("");
   const [changeAddressSuccess, setChangeAddressSuccess] = useState(false);
+
+  // best pharmacies states
+  const [bestPharmacies, setBestPharmacies] = useState<Location[]>([]);
+  const [bestPharmaciesError, setBestPharmaciesError] = useState(false);
+  const [bestPharmaciesLoading, setBestPharmaciesLoading] = useState(false);
+
+  // common symptoms states
+  interface CommonSymptom {
+    symptom_name: string;
+    user_count: number;
+  }
+  const [commonSymptoms, setCommonSymptoms] = useState<CommonSymptom[]>([]);
+  const [commonSymptomsError, setCommonSymptomsError] = useState(false);
+  const [commonSymptomsLoading, setCommonSymptomsLoading] = useState(false);
 
   useEffect(() => {
     if (userEmail == "") {
@@ -309,6 +325,70 @@ function App() {
     }
   };
 
+  const fetchBestPharmacies = async () => {
+    setBestPharmaciesLoading(true);
+    setBestPharmaciesError(false);
+    try {
+      const response = await fetch(
+        `http://localhost:4000/api/getUserMedsAndPharmacies?userEmail=${encodeURIComponent(
+          userEmail || ""
+        )}`
+      );
+      if (!response.ok) {
+        setBestPharmaciesError(true);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log("Best pharmacies data:", data);
+      // Extract pharmacies from the response
+      const pharmaciesData = data.pharmacies || [];
+      interface PharmacyRaw {
+        address: string;
+        city: string;
+        state: string;
+      }
+      const data_transformed = pharmaciesData.map((pharmacy: PharmacyRaw) => ({
+        address: pharmacy.address,
+        city: pharmacy.city,
+        state: pharmacy.state,
+      }));
+      setBestPharmacies(data_transformed);
+    } catch (err) {
+      console.error("Error fetching best pharmacies:", err);
+      setBestPharmaciesError(true);
+    } finally {
+      setBestPharmaciesLoading(false);
+    }
+  };
+
+  const fetchCommonSymptoms = async () => {
+    setCommonSymptomsLoading(true);
+    setCommonSymptomsError(false);
+    try {
+      const response = await fetch(
+        `http://localhost:4000/api/getmedicinesbysymptoms/advanced?email=${encodeURIComponent(
+          userEmail || ""
+        )}`,
+        {
+          method: "PUT",
+        }
+      );
+      if (!response.ok) {
+        setCommonSymptomsError(true);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log("Common symptoms data:", data);
+      const symptomsData = data.symptoms || [];
+      setCommonSymptoms(symptomsData);
+    } catch (err) {
+      console.error("Error fetching common symptoms:", err);
+      setCommonSymptomsError(true);
+    } finally {
+      setCommonSymptomsLoading(false);
+    }
+  };
+
   return (
     <>
     <div>For debugging: your email is {userEmail}</div>
@@ -406,6 +486,38 @@ function App() {
       </form>
       {changeAddressSuccess && <p style={{ color: "green" }}>Address updated successfully!</p>}
       {changeAddressError && <p style={{ color: "red" }}>Error: {changeAddressError}</p>}
+      
+      <h2>General Best Pharmacies</h2>
+      <button onClick={fetchBestPharmacies}>Load Best Pharmacies</button>
+      {bestPharmaciesError ? (
+        <p>There was an error loading the best pharmacies. Please try again</p>
+      ) : bestPharmaciesLoading ? (
+        <p>Loading...</p>
+      ) : (
+        <ul>
+          {bestPharmacies.map((pharmacy, index) => (
+            <li key={index}>
+              {pharmacy.address}, {pharmacy.city}, {pharmacy.state}
+            </li>
+          ))}
+        </ul>
+      )}
+      
+      <h2>Most Common Symptoms</h2>
+      <button onClick={fetchCommonSymptoms}>Load Most Common Symptoms</button>
+      {commonSymptomsError ? (
+        <p>There was an error loading the most common symptoms. Please try again</p>
+      ) : commonSymptomsLoading ? (
+        <p>Loading...</p>
+      ) : (
+        <ul>
+          {commonSymptoms.map((symptom, index) => (
+            <li key={index}>
+              {symptom.symptom_name} - {symptom.user_count} users
+            </li>
+          ))}
+        </ul>
+      )}
       
       <h2>Current Symptoms</h2>
       <ul>

@@ -24,6 +24,15 @@ query('SELECT 1 + 1 AS solution').then(rows => {
     console.error('Database connection failed:', err);
 })
 
+
+async function getMedicinesBySymptomsAdvanced(email) {
+    const sql = `
+        CALL getMedicinesBySymptomsAdvanced(?)
+    `;  
+    const rows = await query(sql, [email]);
+    return [rows[0], rows[1]];
+}
+
 async function addUser(email, state, city, address, preferredPharmacy){
     const sql1 = `
         SELECT id FROM stage2_schema.pharmacies

@@ -201,9 +201,6 @@ app.put("/api/updateuseraddress", async (req, res) => {
     }
 });
 
-// const { getUserMedsAndPharmacies } = require('./db');
-
-
 app.get('/api/getUserMedsAndPharmacies', async (req, res) => {
   const userEmail = req.query.userEmail;
   if (!userEmail) {

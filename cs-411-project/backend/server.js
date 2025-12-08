@@ -201,7 +201,7 @@ app.put("/api/updateuseraddress", async (req, res) => {
     }
 });
 
-const { getUserMedsAndPharmacies } = require('./db');
+// const { getUserMedsAndPharmacies } = require('./db');
 
 
 app.get('/api/getUserMedsAndPharmacies', async (req, res) => {

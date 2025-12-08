@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST || '127.0.0.1',
-    port: Number(process.env.DB_PORT || 3306),
+    port: Number(process.env.DB_PORT || 3307),
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
@@ -65,45 +65,20 @@ async function removeSymptom(email, symptom){
 
 async function getMedicinesBySymptoms(email) {
     const sql = `
-        SELECT 
-            medicines.name AS medicine_name,
-            medicines.rating AS medicine_rating,
-            COUNT(treatedBy.symptom_name) AS symptoms_treated
-        FROM stage2_schema.medicines AS medicines
-        JOIN stage2_schema.treatedBy AS treatedBy 
-            ON medicines.name = treatedBy.medicine_name
-        JOIN stage2_schema.currentlyHas AS currentlyHas 
-            ON treatedBy.symptom_name = currentlyHas.symptom_name
-        WHERE currentlyHas.user_email = ?
-        GROUP BY medicines.name, medicines.rating
-        ORDER BY symptoms_treated DESC, medicine_rating DESC
-        LIMIT 15;
+        CALL getMedicinesBySymptoms(?)
     `;
 
     const rows = await query(sql, [email]);
-    return rows;
+    return rows[0];
 }
 
 async function getPharmaciesByMedicine(medicineName) {
     const sql = `
-        SELECT 
-            pharmacies.id AS pharmacy_id,
-            COUNT(DISTINCT carries.medicine_name) AS num_medicines_carried,
-            pharmacies.address,
-            pharmacies.city,
-            pharmacies.state
-        FROM stage2_schema.pharmacies AS pharmacies
-        JOIN stage2_schema.carries AS carries 
-            ON pharmacies.id = carries.pharmacy_id
-        JOIN stage2_schema.treatedBy AS treatedBy 
-            ON carries.medicine_name = treatedBy.medicine_name
-        WHERE carries.medicine_name = ?
-        GROUP BY pharmacy_id, pharmacies.address, pharmacies.city, pharmacies.state
-        LIMIT 15;
+        CALL getPharmaciesByMedicine(?)
     `;
 
     const rows = await query(sql, [medicineName]);
-    return rows;
+    return rows[0];
 }
 
 async function getUserMedsAndPharmacies(userEmail) {
